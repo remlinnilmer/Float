@@ -12,9 +12,6 @@ cifar10TestA100.py — CIFAR-10 dual-benchmark script tuned for A100/AMP and BN-
 
 CIFAIR10Results.txt — Example run log (A100) showing configs, per-epoch metrics, and best accuracy.
 
-requirements.txt — Minimal dependencies.
-
-
 
 Notes:
 
