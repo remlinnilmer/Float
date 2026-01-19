@@ -37,6 +37,3 @@ Results:
 
 See CIFAIR10Results.txt for a full example log from an A100 run.
 
-Using FLOAT in your own model
-from FloatingBlock import FloatingConvBlockV1, FloatingBlockConfig
-
