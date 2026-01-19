@@ -1,33 +1,42 @@
 Floating Convolutional Blocks (FLOAT)
 
-FLOAT is a stateless CNN residual block that replaces BatchNorm-style running statistics with Relative Energy Norm (REN) and bounded, groupwise gain/bias modulation derived from compact “wave descriptors” of the current normalized activation field.
+FLOAT is a stateless convolutional residual block designed to be a practical alternative to BatchNorm-style normalization. It uses Relative Energy Norm (REN) and a lightweight gate that applies bounded, groupwise gain/bias modulation from compact “wave descriptors” computed on the current activation field.
 
-This repo includes the core block implementation and CIFAR-10 dual-benchmark script (FLOAT vs ResNet-18) with BN-safe evaluation.
+The goal is simple: stable training and reliable inference without running-statistics coupling, while remaining drop-in friendly for CNN backbones.
 
-Files
+Why FLOAT
 
-FloatingBlock.py — FloatingConvBlockV1 + REN + gated modulation + config (standalone module).
+No running statistics: REN is per-sample and per-group, avoiding train/eval distribution mismatch from stored batch statistics.
 
-cifar10TestA100.py — CIFAR-10 dual-benchmark script tuned for A100/AMP and BN-safe eval defaults.
+Batch-size tolerant: designed to behave sensibly even at small batch sizes (including batch size 1).
 
-CIFAIR10Results.txt — Example run log (A100) showing configs, per-epoch metrics, and best accuracy.
+Bounded adaptation: gain/bias are constrained and initialized near identity for stability.
+
+Compact conditioning: descriptors are small, interpretable signals (moments + optional texture/roughness terms).
+
+Deployment option: supports freeze-to-static mode for deterministic, cheaper inference.
+
+What’s in this repo
+
+FloatingBlock.py — FloatingConvBlockV1 + REN + gated modulation + config (standalone module)
+
+cifar10Test.py — CIFAR-10 dual benchmark (FLOAT vs ResNet-18)
+
+CIFAIR10Results.txt — example run log (configs, per-epoch metrics, best accuracy)
+
+Example run:
+
+python cifar10Test.py --epochs 300 --batch-size 512 --workers 8 --amp --amp-dtype bf16 --ema 0.9999 --mixup 0.2 --cutmix 1.0 --label-smoothing 0.1 --randaugment-n 2 --randaugment-m 9
 
 
-Notes:
+Evaluation note:
 
-The script runs FLOAT first, then ResNet18 under the same recipe.
+The benchmark script uses BN-safe evaluation behavior: if a model contains BatchNorm2d, validation defaults to the RAW model (not EMA) to avoid BN running-stat artifacts.
 
-BN-safe evaluation: if the model contains BatchNorm2d, validation uses the RAW model by default (avoids EMA + BN running-stat mismatch under heavy Mixup/CutMix).
+Results:
 
-Results
-
-See CIFAIR10Results.txt for a full example log from an A100 run (device + config printed at start; per-epoch metrics; best validation accuracy).
+See CIFAIR10Results.txt for a full example log from an A100 run.
 
 Using FLOAT in your own model
-
-Import the block and config from FloatingBlock.py:
-
 from FloatingBlock import FloatingConvBlockV1, FloatingBlockConfig
 
-
-Instantiate blocks and configure REN + bounded modulation via FloatingBlockConfig (gate groups, gain/bias bounds, optional descriptors like TV/Sobel/entropy/kurtosis, etc.).
